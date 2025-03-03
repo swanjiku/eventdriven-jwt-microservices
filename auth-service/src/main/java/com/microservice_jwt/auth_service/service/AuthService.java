@@ -6,12 +6,13 @@ import com.microservice_jwt.auth_service.repository.UserRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
 import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -21,11 +22,16 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final SecretKey key = Keys.hmacShaKeyFor("404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970".getBytes());
+    private final SecretKey key;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    @Value("${jwt.expiration}")
+    private long expirationTime;
+
+    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
+                       @Value("${jwt.secret}") String secretKey) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
     }
 
     public String register(String username, String email, String password, Set<Role> roles) {
@@ -55,14 +61,12 @@ public class AuthService {
     }
 
     private String generateToken(User user) {
-        long expirationTime = System.currentTimeMillis() + 86400000;
-
         return Jwts.builder()
                 .setSubject(user.getId().toString())
                 .claim("username", user.getUsername())
                 .claim("roles", user.getRoles().stream().map(Role::name).collect(Collectors.toList()))
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(expirationTime))
+                .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
     }

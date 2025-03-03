@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -20,20 +21,20 @@ public class UserController {
     private final UserService userService;
 
     /**
-     * Retrieves the authenticated user's profile.
+     * ✅ Get authenticated user profile.
      */
     @GetMapping("/profile")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<User> getUserProfile() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userId = authentication.getName(); // Extracts user ID from token
+        String userId = authentication.getName(); // Extract userId (make sure JWT stores MongoDB ID!)
 
         Optional<User> user = userService.getUserById(userId);
         return user.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     /**
-     * Retrieves all users (Only accessible by ADMIN).
+     * ✅ Get all users (Admin only).
      */
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
@@ -42,7 +43,7 @@ public class UserController {
     }
 
     /**
-     * Retrieves a user by ID.
+     * ✅ Get user by ID.
      */
     @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(@PathVariable String id) {
@@ -52,16 +53,36 @@ public class UserController {
     }
 
     /**
-     * Updates a user by ID.
+     * ✅ Update user (PUT request).
      */
     @PutMapping("/{id}")
-    @PreAuthorize("isAuthenticated()") // Ensure only authenticated users can update
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<User> updateUser(@PathVariable String id, @RequestBody User updatedUser) {
         return ResponseEntity.ok(userService.updateUser(id, updatedUser));
     }
 
     /**
-     * Deletes a user (ADMIN only).
+     * ✅ Partially update user (PATCH request).
+     */
+    @PatchMapping("/{id}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<User> patchUser(@PathVariable String id, @RequestBody Map<String, Object> updates) {
+        return ResponseEntity.ok(userService.partialUpdateUser(id, updates));
+    }
+
+    /**
+     * ✅ Update password separately.
+     */
+    @PatchMapping("/{id}/password")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<String> changePassword(@PathVariable String id, @RequestBody Map<String, String> request) {
+        String newPassword = request.get("newPassword");
+        userService.updatePassword(id, newPassword);
+        return ResponseEntity.ok("Password updated successfully");
+    }
+
+    /**
+     * ✅ Delete user (Admin only).
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")

@@ -1,5 +1,6 @@
 package com.microservice_jwt.auth_service.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -21,7 +22,10 @@ public class User implements UserDetails {
 
     private String username;
     private String email;
-    private String password;
+
+    @JsonIgnore
+    private String password; // Exclude Passwords from Responses
+
     private Set<Role> roles;
 
     private boolean accountNonExpired = true;
