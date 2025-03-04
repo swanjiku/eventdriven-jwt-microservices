@@ -17,7 +17,14 @@ public class RedisSubscriber implements MessageListener {
     @Override
     public void onMessage(Message message, byte[] pattern) {
         String notification = new String(message.getBody());
+
+        // 🔴 Debugging Logs
+        System.out.println("🔔 RedisSubscriber received: " + notification);
+        System.out.println("🚀 Sending to WebSocket clients on /topic/notifications");
+
+        // 🔴 Forward notification to WebSocket clients
         messagingTemplate.convertAndSend("/topic/notifications", notification);
+        System.out.println("🚀 Sent to WebSocket: " + notification);
     }
 }
 
