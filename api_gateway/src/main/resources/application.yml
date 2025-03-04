@@ -20,6 +20,11 @@ spring:
           predicates:
             - Path=/api/users/**
 
+        - id: notification-service
+          uri: lb://NOTIFICATION-SERVICE
+          predicates:
+            - Path=/api/notifications**
+
 eureka:
   instance:
     prefer-ip-address: true
