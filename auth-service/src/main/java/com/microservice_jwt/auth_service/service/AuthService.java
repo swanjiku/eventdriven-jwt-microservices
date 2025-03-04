@@ -7,13 +7,17 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.http.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -24,14 +28,17 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final SecretKey key;
 
+    private final StringRedisTemplate redisTemplate;  // Inject Redis
+
     @Value("${jwt.expiration}")
     private long expirationTime;
 
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                       @Value("${jwt.secret}") String secretKey) {
+                       @Value("${jwt.secret}") String secretKey, StringRedisTemplate redisTemplate) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+        this.redisTemplate = redisTemplate;
     }
 
     public String register(String username, String email, String password, Set<Role> roles) {
@@ -46,6 +53,9 @@ public class AuthService {
         user.setRoles(roles);
         userRepository.save(user);
 
+        // 🔴 Publish event to Redis
+        redisTemplate.convertAndSend("notifications", "User " + username + " registered successfully!");
+
         return "User registered successfully";
     }
 
@@ -56,6 +66,9 @@ public class AuthService {
         if (!passwordEncoder.matches(password, user.getPassword())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
+
+        // 🔴 Publish event to Redis
+        redisTemplate.convertAndSend("notifications", "User " + user.getUsername() + " logged in!");
 
         return generateToken(user);
     }
