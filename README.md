@@ -44,3 +44,8 @@ Start the services in the following order:
    cd notification-service
    mvn spring-boot:run
    ```
+## 📌 Future Enhancements
+- Implement Redis Streams for better notification handling.
+- Add recipient tracking in notification-service.
+- Introduce rate limiting in api-gateway.
+- Add centralized logging and monitoring.
