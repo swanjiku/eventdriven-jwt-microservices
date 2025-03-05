@@ -6,15 +6,15 @@
 
 The API Gateway serves as the entry point for all microservices. It routes requests, handles authentication, and enforces security using Spring Cloud Gateway.
 
-🛠️ Tech Stack
+## 🛠️ Tech Stack
 
--**Java 17**
--**Spring Boot**
--**Spring Cloud Gateway**
--**Spring Security**
--**Eureka Client** (Service Discovery)
+- **Java 17**
+- **Spring Boot**
+- **Spring Cloud Gateway**
+-  **Spring Security**
+- **Eureka Client** (Service Discovery)
 
-⚙️ Features
+## ⚙️ Features
 
 ✅ Routes and Load Balances Requests to Microservices<br>
 ✅ JWT Authentication and Authorization<br>
