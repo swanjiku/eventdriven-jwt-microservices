@@ -3,7 +3,7 @@
 
 ## 📌 Overview
 
-The User Service handles user-related operations such as registration, profile management, and role-based access control.
+The **User Service** handles user-related operations such as registration, profile management, and role-based access control.
 
 ## 🛠️ Tech Stack
 
