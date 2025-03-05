@@ -16,7 +16,7 @@ public class WebSocketSecurityConfig {
                 .csrf(csrf -> csrf.disable())  // Disable CSRF for WebSockets
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/ws/**").permitAll()  // Allow WebSockets without authentication
-                        .requestMatchers("/notifications/send").permitAll()  // Allow sending notifications
+                        .requestMatchers("/notifications/**").permitAll()  // Allow sending notifications
                         .anyRequest().authenticated())  // Protect all other routes
                 .httpBasic(httpBasic -> httpBasic.disable());  // Disable Basic Auth (Optional)
 

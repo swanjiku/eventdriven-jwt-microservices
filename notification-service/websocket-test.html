@@ -9,16 +9,38 @@
 </head>
 <body>
 <h2>WebSocket Test</h2>
+<button onclick="sendTestNotification()">Send Test Notification</button>
+<ul id="notifications"></ul>
+
 <script>
-    const socket = new SockJS("http://localhost:8084/ws");
+    const socket = new SockJS("http://localhost:8084/ws");  // Update with your actual WebSocket endpoint
     const stompClient = Stomp.over(socket);
 
     stompClient.connect({}, function (frame) {
         console.log("✅ Connected: " + frame);
+
+        // Subscribe to notifications topic
         stompClient.subscribe("/topic/notifications", function (message) {
             console.log("🔔 Received:", message.body);
+
+            // Display notification in the UI
+            const notificationList = document.getElementById("notifications");
+            const listItem = document.createElement("li");
+            listItem.textContent = message.body;
+            notificationList.appendChild(listItem);
         });
+
+    }, function (error) {
+        console.error("❌ WebSocket Connection Failed:", error);
     });
+
+    // Function to send a test message
+    function sendTestNotification() {
+        fetch("http://localhost:8084/notifications/test")  // Make sure this endpoint exists in your backend
+            .then(response => response.text())
+            .then(data => console.log("📨 Sent test notification:", data))
+            .catch(error => console.error("⚠️ Error sending test notification:", error));
+    }
 </script>
 </body>
 </html>

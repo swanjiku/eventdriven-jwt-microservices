@@ -18,4 +18,12 @@ public class NotificationController {
         redisPublisher.publish("notifications", message);
         return "Notification sent!";
     }
+
+    // ✅ Test endpoint to send a default notification
+    @GetMapping("/test")
+    public String sendTestNotification() {
+        String testMessage = "🚀 Test notification from backend!";
+        redisPublisher.publish("notifications", testMessage);
+        return "Test notification sent!";
+    }
 }
