@@ -4,10 +4,10 @@ This is a microservices-based system implementing JWT authentication with Spring
 
 ## 🔗 Microservices Architecture
 The system consists of the following services:
-- [Eureka Server](./eureka-server/README.md) - Service Discovery
-- [API Gateway](./api-gateway/README.md) - Routing and Security
+- [Eureka Server](./eureka_server/README.md) - Service Discovery
+- [API Gateway](./api_gateway/README.md) - Routing and Security
 - [Auth Service](./auth-service/README.md) - Authentication & JWT Issuance
-- [User Service](./user-service/README.md) - User Management
+- [User Service](./user_service/README.md) - User Management
 - [Notification Service](./notification-service/README.md) - Real-time Notifications
 
 ## 🛠️ Tech Stack
