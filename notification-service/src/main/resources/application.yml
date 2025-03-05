@@ -9,6 +9,10 @@ spring:
     port: 6379
     password: ""  # Set if Redis requires authentication
 
+  data:
+    mongodb:
+      uri: mongodb://admin:adminpass@localhost:27017/user_db?authSource=admin
+
 eureka:
   client:
     service-url:
