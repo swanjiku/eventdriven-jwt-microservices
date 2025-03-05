@@ -3,6 +3,7 @@ package com.microservice_jwt.user_service.service;
 import com.microservice_jwt.user_service.model.User;
 import com.microservice_jwt.user_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.GrantedAuthority;
@@ -20,6 +21,8 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+
+    private final StringRedisTemplate redisTemplate;  // Inject Redis
 
     // ✅ Get all users (Admin only)
     public List<User> getAllUsers() {
@@ -65,6 +68,9 @@ public class UserService {
                 }
             }
 
+            // 🔴 Publish event to Redis
+            redisTemplate.convertAndSend("notifications", "User " + existingUser.getUsername() + " updated successfully!");
+
             return userRepository.save(existingUser);
         }).orElseThrow(() -> new RuntimeException("User not found"));
     }
@@ -78,7 +84,12 @@ public class UserService {
                     case "email" -> user.setEmail((String) value);
                 }
             });
+
+            // 🔴 Publish event to Redis
+            redisTemplate.convertAndSend("notifications", "User " + user.getUsername() + " updated successfully!");
+
             return userRepository.save(user);
+
         }).orElseThrow(() -> new RuntimeException("User not found"));
     }
 
@@ -87,6 +98,10 @@ public class UserService {
         userRepository.findById(id).ifPresentOrElse(user -> {
             user.setPassword(passwordEncoder.encode(newPassword));
             userRepository.save(user);
+
+            // 🔴 Publish event to Redis
+            redisTemplate.convertAndSend("notifications", "User " + user.getUsername() + " password updated successfully!");
+
         }, () -> {
             throw new RuntimeException("User not found");
         });
