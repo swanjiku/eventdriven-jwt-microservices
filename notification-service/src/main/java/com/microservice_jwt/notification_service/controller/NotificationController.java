@@ -3,12 +3,17 @@ package com.microservice_jwt.notification_service.controller;
 import com.microservice_jwt.notification_service.model.Notification;
 import com.microservice_jwt.notification_service.redis.RedisPublisher;
 import com.microservice_jwt.notification_service.repository.NotificationRepository;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @RestController
-@RequestMapping("/notifications")
+@RequestMapping("/api/notifications")
 public class NotificationController {
 
     private final RedisPublisher redisPublisher;
@@ -27,9 +32,17 @@ public class NotificationController {
         return "Notification sent!";
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/all")
     public List<Notification> getAllNotifications() {
         return notificationRepository.findAll();
+    }
+    @GetMapping("/user")
+    public List<Notification> getUserNotifications() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String userId = authentication.getName();
+
+        return notificationRepository.findByRecipientIdOrIsGlobal(userId, true);
     }
 
     @GetMapping("/user/{userId}")

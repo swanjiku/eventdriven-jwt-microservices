@@ -41,7 +41,7 @@
 
     // Function to send a test message
     function sendTestNotification() {
-        fetch("http://localhost:8084/notifications/test", { method: "POST" })  // ✅ Ensure backend supports POST
+        fetch("http://localhost:8084/api/notifications/test", { method: "POST" })  // ✅ Ensure backend supports POST
             .then(response => response.text())
             .then(data => console.log("📨 Sent test notification:", data))
             .catch(error => console.error("⚠️ Error sending test notification:", error));
