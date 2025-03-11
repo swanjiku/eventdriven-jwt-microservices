@@ -1,18 +1,18 @@
 package com.microservice_jwt.user_service.service;
 
+import com.microservice_jwt.user_service.model.Role;
 import com.microservice_jwt.user_service.model.User;
 import com.microservice_jwt.user_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.connection.stream.ObjectRecord;
+import org.springframework.data.redis.connection.stream.StreamRecords;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,34 +21,27 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RedisTemplate<String, String> redisTemplate;  // ✅ Use Redis Streams
 
-    private final StringRedisTemplate redisTemplate;  // Inject Redis
-
-    // ✅ Get all users (Admin only)
     public List<User> getAllUsers() {
         return userRepository.findAll();
     }
 
-    // ✅ Get user by ID
     public Optional<User> getUserById(String id) {
         return userRepository.findById(id);
     }
 
-    // ✅ Get user by username
     public Optional<User> getUserByUsername(String username) {
         return userRepository.findByUsername(username);
     }
 
-    // ✅ Get user by email
     public Optional<User> getUserByEmail(String email) {
         return userRepository.findByEmail(email);
     }
 
-    // ✅ Update user details (excluding roles)
     public User updateUser(String id, User updatedUser) {
         return userRepository.findById(id).map(existingUser -> {
 
-            // Only update fields if provided in the request
             if (updatedUser.getUsername() != null) {
                 existingUser.setUsername(updatedUser.getUsername());
             }
@@ -59,7 +52,6 @@ public class UserService {
                 existingUser.setPassword(passwordEncoder.encode(updatedUser.getPassword()));
             }
 
-            // ✅ Update roles only if the current user is an admin
             if (updatedUser.getRoles() != null) {
                 if (currentUserHasAdminRole()) {
                     existingUser.setRoles(updatedUser.getRoles());
@@ -68,51 +60,71 @@ public class UserService {
                 }
             }
 
-            // 🔴 Publish event to Redis
-            redisTemplate.convertAndSend("notifications", "User " + existingUser.getUsername() + " updated successfully!");
+            // ✅ Publish event to Redis Stream
+            sendNotificationToRedis(existingUser.getUsername(), "User updated successfully!", existingUser.getId());
 
             return userRepository.save(existingUser);
         }).orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    // ✅ Patch user (Partial update)
     public User partialUpdateUser(String id, Map<String, Object> updates) {
-        return userRepository.findById(id).map(user -> {
+        return userRepository.findById(id).map(existingUser -> {
             updates.forEach((key, value) -> {
                 switch (key) {
-                    case "username" -> user.setUsername((String) value);
-                    case "email" -> user.setEmail((String) value);
+                    case "username":
+                        existingUser.setUsername((String) value);
+                        break;
+                    case "email":
+                        existingUser.setEmail((String) value);
+                        break;
+                    case "password":
+                        existingUser.setPassword(passwordEncoder.encode((String) value));
+                        break;
+                    case "roles":
+                        if (currentUserHasAdminRole()) {
+                            existingUser.setRoles((Set<Role>) value);
+                        } else {
+                            throw new RuntimeException("You are not authorized to change roles.");
+                        }
+                        break;
                 }
             });
 
-            // 🔴 Publish event to Redis
-            redisTemplate.convertAndSend("notifications", "User " + user.getUsername() + " updated successfully!");
-
-            return userRepository.save(user);
-
+            return userRepository.save(existingUser);
         }).orElseThrow(() -> new RuntimeException("User not found"));
     }
 
-    // ✅ Update password (separate method)
     public void updatePassword(String id, String newPassword) {
         userRepository.findById(id).ifPresentOrElse(user -> {
             user.setPassword(passwordEncoder.encode(newPassword));
             userRepository.save(user);
 
-            // 🔴 Publish event to Redis
-            redisTemplate.convertAndSend("notifications", "User " + user.getUsername() + " password updated successfully!");
+            // ✅ Publish event to Redis Stream
+            sendNotificationToRedis(user.getUsername(), "User password updated successfully!", user.getId());
 
         }, () -> {
             throw new RuntimeException("User not found");
         });
     }
 
-    // ✅ Delete user (Admin only)
+    private void sendNotificationToRedis(String username, String message, String recipientId) {
+        Map<String, String> notificationData = new HashMap<>();
+        notificationData.put("message", message);
+        notificationData.put("recipientId", recipientId);
+        notificationData.put("isGlobal", "false"); // Individual notifications
+
+        ObjectRecord<String, Map<String, String>> record = ObjectRecord.create("notifications_stream", notificationData);
+
+        redisTemplate.opsForStream().add(record);
+    }
+
     public void deleteUser(String id) {
+        if (!userRepository.existsById(id)) {
+            throw new RuntimeException("User not found");
+        }
         userRepository.deleteById(id);
     }
 
-    // 🚨 Check if current user is an ADMIN
     private boolean currentUserHasAdminRole() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
         Set<String> roles = authentication.getAuthorities().stream()

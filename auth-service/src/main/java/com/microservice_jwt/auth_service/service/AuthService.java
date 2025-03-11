@@ -7,18 +7,16 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.http.*;
+import org.springframework.data.redis.connection.stream.ObjectRecord;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
+
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,13 +26,13 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final SecretKey key;
 
-    private final StringRedisTemplate redisTemplate;  // Inject Redis
+    private final RedisTemplate<String, String> redisTemplate; // ✅ Use RedisTemplate
 
     @Value("${jwt.expiration}")
     private long expirationTime;
 
     public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                       @Value("${jwt.secret}") String secretKey, StringRedisTemplate redisTemplate) {
+                       @Value("${jwt.secret}") String secretKey, RedisTemplate<String, String> redisTemplate) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
@@ -53,8 +51,8 @@ public class AuthService {
         user.setRoles(roles);
         userRepository.save(user);
 
-        // 🔴 Publish event to Redis
-        redisTemplate.convertAndSend("notifications", "User " + username + " registered successfully!");
+        // ✅ Publish event to Redis Stream
+        sendNotificationToRedis(username, "User registered successfully!", user.getId());
 
         return "User registered successfully";
     }
@@ -67,8 +65,8 @@ public class AuthService {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
-        // 🔴 Publish event to Redis
-        redisTemplate.convertAndSend("notifications", "User " + user.getUsername() + " logged in!");
+        // ✅ Publish event to Redis Stream
+        sendNotificationToRedis(user.getUsername(), "User logged in!", user.getId());
 
         return generateToken(user);
     }
@@ -82,5 +80,16 @@ public class AuthService {
                 .setExpiration(new Date(System.currentTimeMillis() + expirationTime))
                 .signWith(key, SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    private void sendNotificationToRedis(String username, String message, String recipientId) {
+        Map<String, String> notificationData = new HashMap<>();
+        notificationData.put("message", message);
+        notificationData.put("recipientId", recipientId);
+        notificationData.put("isGlobal", "false"); // Individual notifications
+
+        ObjectRecord<String, Map<String, String>> record = ObjectRecord.create("notifications_stream", notificationData);
+
+        redisTemplate.opsForStream().add(record);
     }
 }

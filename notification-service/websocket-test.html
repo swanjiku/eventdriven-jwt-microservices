@@ -13,34 +13,42 @@
 <ul id="notifications"></ul>
 
 <script>
-    const socket = new SockJS("http://localhost:8084/ws");  // Update with your actual WebSocket endpoint
-    const stompClient = Stomp.over(socket);
+    let stompClient = null;
 
-    stompClient.connect({}, function (frame) {
-        console.log("✅ Connected: " + frame);
+    function connectWebSocket() {
+        const socket = new SockJS("http://localhost:8084/ws");  // ✅ Update with actual WebSocket endpoint
+        stompClient = Stomp.over(socket);
 
-        // Subscribe to notifications topic
-        stompClient.subscribe("/topic/notifications", function (message) {
-            console.log("🔔 Received:", message.body);
+        stompClient.connect({}, function (frame) {
+            console.log("✅ Connected: " + frame);
 
-            // Display notification in the UI
-            const notificationList = document.getElementById("notifications");
-            const listItem = document.createElement("li");
-            listItem.textContent = message.body;
-            notificationList.appendChild(listItem);
+            // Subscribe to notifications topic
+            stompClient.subscribe("/topic/notifications", function (message) {
+                console.log("🔔 Received:", message.body);
+
+                // Display notification in the UI (newest at the top)
+                const notificationList = document.getElementById("notifications");
+                const listItem = document.createElement("li");
+                listItem.textContent = message.body;
+                notificationList.prepend(listItem);
+            });
+
+        }, function (error) {
+            console.error("❌ WebSocket Connection Failed:", error);
+            setTimeout(connectWebSocket, 5000);  // ✅ Auto-reconnect after 5 seconds
         });
-
-    }, function (error) {
-        console.error("❌ WebSocket Connection Failed:", error);
-    });
+    }
 
     // Function to send a test message
     function sendTestNotification() {
-        fetch("http://localhost:8084/notifications/test")  // Make sure this endpoint exists in your backend
+        fetch("http://localhost:8084/notifications/test", { method: "POST" })  // ✅ Ensure backend supports POST
             .then(response => response.text())
             .then(data => console.log("📨 Sent test notification:", data))
             .catch(error => console.error("⚠️ Error sending test notification:", error));
     }
+
+    // Connect to WebSocket on page load
+    connectWebSocket();
 </script>
 </body>
 </html>

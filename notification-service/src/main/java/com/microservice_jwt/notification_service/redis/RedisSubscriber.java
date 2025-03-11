@@ -1,5 +1,6 @@
 package com.microservice_jwt.notification_service.redis;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microservice_jwt.notification_service.model.Notification;
 import com.microservice_jwt.notification_service.repository.NotificationRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -12,6 +13,7 @@ public class RedisSubscriber implements MessageListener {
 
     private final SimpMessagingTemplate messagingTemplate;
     private final NotificationRepository notificationRepository;
+    private final ObjectMapper objectMapper = new ObjectMapper(); // ✅ JSON Parser
 
     public RedisSubscriber(SimpMessagingTemplate messagingTemplate, NotificationRepository notificationRepository) {
         this.messagingTemplate = messagingTemplate;
@@ -20,19 +22,22 @@ public class RedisSubscriber implements MessageListener {
 
     @Override
     public void onMessage(Message message, byte[] pattern) {
-        String notificationText  = new String(message.getBody());
+        try {
+            String notificationText = new String(message.getBody());
+            Notification notification = objectMapper.readValue(notificationText, Notification.class); // ✅ Parse JSON
 
-        // 🔹 Save to MongoDB
-        Notification notification = new Notification(notificationText);
-        notificationRepository.save(notification);
+            // 🔹 Save to MongoDB
+            notificationRepository.save(notification);
 
-        // 🔴 Debugging Logs
-        System.out.println("🔔 RedisSubscriber received: " + notificationText );
-        System.out.println("🚀 Sending to WebSocket clients on /topic/notifications");
+            // 🔴 Debugging Logs
+            System.out.println("🔔 RedisSubscriber received: " + notificationText);
+            System.out.println("🚀 Sending to WebSocket clients on /topic/notifications");
 
-        // 🔴 Forward/Send notification to WebSocket clients
-        messagingTemplate.convertAndSend("/topic/notifications", notificationText );
-        System.out.println("🚀 Sent to WebSocket: " + notificationText );
+            // 🔴 Forward/Send notification to WebSocket clients
+            messagingTemplate.convertAndSend("/topic/notifications", notification);
+            System.out.println("🚀 Sent to WebSocket: " + notification);
+        } catch (Exception e) {
+            System.err.println("❌ Error parsing notification: " + e.getMessage());
+        }
     }
 }
-

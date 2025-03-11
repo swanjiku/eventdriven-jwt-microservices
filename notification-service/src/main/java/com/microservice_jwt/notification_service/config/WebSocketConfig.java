@@ -16,18 +16,16 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry config) {
-        config.enableSimpleBroker("/topic");  // Clients subscribe here
-        config.setApplicationDestinationPrefixes("/app");  // Clients send messages here
-
+        config.enableSimpleBroker("/topic");
+        config.setApplicationDestinationPrefixes("/app");
         logger.info("✅ STOMP Broker initialized with /topic and /app");
     }
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("http://localhost:3000", "http://127.0.0.1:5500")  // ✅ FIX: Use allowedOriginPatterns()
-                .withSockJS();  // ✅ Enables SockJS fallback for compatibility
-
+                .setAllowedOriginPatterns("http://localhost:3000", "http://127.0.0.1:5500")
+                .withSockJS();
         logger.info("✅ WebSocket endpoint /ws registered successfully!");
     }
 }

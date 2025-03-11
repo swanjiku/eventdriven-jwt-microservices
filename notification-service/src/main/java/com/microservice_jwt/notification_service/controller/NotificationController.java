@@ -20,21 +20,25 @@ public class NotificationController {
     }
 
     @PostMapping("/send")
-    public String sendNotification(@RequestParam String message) {
-        redisPublisher.publish("notifications", message);
+    public String sendNotification(@RequestParam String message,
+                                   @RequestParam(required = false) String recipientId) {
+        boolean isGlobal = (recipientId == null || recipientId.isBlank());
+        redisPublisher.publish(message, recipientId, isGlobal);
         return "Notification sent!";
     }
 
-    // ✅ Test endpoint to send a default notification
-    @GetMapping("/test")
-    public String sendTestNotification() {
-        String testMessage = "🚀 Test notification from backend!";
-        redisPublisher.publish("notifications", testMessage);
-        return "Test notification sent!";
+    @GetMapping("/all")
+    public List<Notification> getAllNotifications() {
+        return notificationRepository.findAll();
     }
 
-    @GetMapping("/history")
-    public List<Notification> getNotificationHistory() {
-        return notificationRepository.findAll();
+    @GetMapping("/user/{userId}")
+    public List<Notification> getUserNotifications(@PathVariable String userId) {
+        return notificationRepository.findByRecipientIdOrIsGlobal(userId, true);
+    }
+
+    @PostMapping("/test")
+    public String testNotification() {
+        return "✅ Test notification endpoint working!";
     }
 }
