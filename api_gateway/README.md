@@ -11,7 +11,8 @@ The API Gateway serves as the entry point for all microservices. It routes reque
 - **Java 17**
 - **Spring Boot**
 - **Spring Cloud Gateway**
--  **Spring Security**
+- **Spring Security**
+- **JWT Authentication**
 - **Eureka Client** (Service Discovery)
 
 ## ⚙️ Features

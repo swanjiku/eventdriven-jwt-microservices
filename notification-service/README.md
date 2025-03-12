@@ -9,7 +9,7 @@ The Notification Service handles real-time notifications by consuming events fro
 
 - **Java 17+**
 - **Spring Boot**
-- **Spring Data JPA**
+- **Spring Data MongoDB**
 - **Redis** (Event Subscription)
 - **Spring WebSocket** (Real Time Updates)
 - **Eureka Client** (Service Discovery)

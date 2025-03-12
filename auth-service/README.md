@@ -12,7 +12,8 @@ The Auth Service handles **user authentication, authorization, and JWT token gen
 - **Spring Security**
 - **Spring Data MongoDB**
 - **Eureka Client** (Service Discovery)
-- **Redis** (For event notifications)
+- **API Gateway Integration**
+- **Redis** (For event publishing)
 
 
 ## ⚙️ Features
