@@ -2,6 +2,7 @@ package com.microservice_jwt.api_gateway.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
@@ -17,6 +18,7 @@ import reactor.core.publisher.Mono;
 
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.List;
 
 @Component
@@ -25,7 +27,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     private final SecretKey key;
 
     public JwtAuthenticationFilter(@Value("${jwt.secret}") String secretKey) {
-        this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
+        this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
     }
 
     @Override
@@ -91,11 +93,19 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private Claims validateToken(String token) {
         try {
-            return Jwts.parserBuilder()
+            Claims claims = Jwts.parserBuilder()
                     .setSigningKey(key)
                     .build()
                     .parseClaimsJws(token)
                     .getBody();
+
+            // Check if token is expired
+            if (claims.getExpiration().before(new Date())) {
+                System.out.println("JWT token has expired."); // Log a meaningful message
+                return null; // Token is expired
+            }
+
+            return claims;
         } catch (Exception e) {
             System.out.println("JWT validation failed: " + e.getMessage()); // Log a meaningful message
             return null;

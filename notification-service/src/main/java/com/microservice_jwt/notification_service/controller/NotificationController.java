@@ -3,14 +3,12 @@ package com.microservice_jwt.notification_service.controller;
 import com.microservice_jwt.notification_service.model.Notification;
 import com.microservice_jwt.notification_service.redis.RedisPublisher;
 import com.microservice_jwt.notification_service.repository.NotificationRepository;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/notifications")
@@ -37,6 +35,7 @@ public class NotificationController {
     public List<Notification> getAllNotifications() {
         return notificationRepository.findAll();
     }
+
     @GetMapping("/user")
     public List<Notification> getUserNotifications() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();

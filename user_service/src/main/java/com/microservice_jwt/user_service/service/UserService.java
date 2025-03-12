@@ -5,7 +5,6 @@ import com.microservice_jwt.user_service.model.User;
 import com.microservice_jwt.user_service.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.redis.connection.stream.ObjectRecord;
-import org.springframework.data.redis.connection.stream.StreamRecords;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.core.context.SecurityContextHolder;

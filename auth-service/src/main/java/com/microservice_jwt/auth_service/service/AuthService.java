@@ -5,6 +5,7 @@ import com.microservice_jwt.auth_service.model.User;
 import com.microservice_jwt.auth_service.repository.UserRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.connection.stream.ObjectRecord;
@@ -24,20 +25,24 @@ public class AuthService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RedisTemplate<String, String> redisTemplate;
     private final SecretKey key;
+    private final long expirationTime;
 
-    private final RedisTemplate<String, String> redisTemplate; // ✅ Use RedisTemplate
+    public AuthService(
+            UserRepository userRepository,
+            PasswordEncoder passwordEncoder,
+            @Value("${jwt.secret}") String secretKey,
+            RedisTemplate<String, String> redisTemplate,
+            @Value("${jwt.expiration}") long expirationTime) {
 
-    @Value("${jwt.expiration}")
-    private long expirationTime;
-
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder,
-                       @Value("${jwt.secret}") String secretKey, RedisTemplate<String, String> redisTemplate) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
         this.redisTemplate = redisTemplate;
+        this.expirationTime = expirationTime;
+        this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secretKey));
     }
+
 
     public String register(String username, String email, String password, Set<Role> roles) {
         if (userRepository.findByUsername(username).isPresent()) {
