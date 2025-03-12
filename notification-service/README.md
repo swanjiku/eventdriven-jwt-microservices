@@ -20,3 +20,45 @@ The Notification Service handles real-time notifications by consuming events fro
 **✅ Processes and Sends Notifications**<br>
 **✅ WebSockets for Real-Time Updates**<br>
 **✅ Service Discovery via Eureka**<br>
+
+## 🚀 Running the Notification Service
+### 🛠️ Prerequisites
+Ensure you have installed:
+
+- Java 17+
+- Maven
+- Redis (for message publishing and event handling)
+- Eureka Server (Running)
+
+### 💻 Steps to Run
+#### 1️⃣ Navigate to the project directory:
+
+```bash
+cd notification-service
+```
+
+#### 2️⃣ Build the project:
+
+```bash
+mvn clean install
+```
+#### 3️⃣ Run the service:
+
+```bash
+mvn spring-boot:run
+```
+
+## 🔔 Notification Processing Flow
+1. **User-Service publishes an event to Redis** when a user updates their profile.
+2. **Notification-Service listens to the event** and processes the message.
+3. **A notification is created and stored** in the database.
+4. **A WebSocket connection is used** to push real-time notifications to clients.
+
+## 📢 Future Enhancements
+ **🚀 WebSocket Integration** for real-time notifications<br>
+ **📧 Email and Push Notification Support**
+
+## 🛠️ Common Issues & Fixes
+### ❌ Notifications Not Being Stored?
+✔️ Ensure Redis is running and accessible.<br>
+✔️ Check if `user-service` is correctly publishing events.
