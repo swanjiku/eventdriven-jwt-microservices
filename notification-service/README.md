@@ -55,10 +55,9 @@ mvn spring-boot:run
 4. **A WebSocket connection is used** to push real-time notifications to clients.
 
 ## 📢 Future Enhancements
- **🚀 WebSocket Integration** for real-time notifications<br>
  **📧 Email and Push Notification Support**
 
 ## 🛠️ Common Issues & Fixes
 ### ❌ Notifications Not Being Stored?
 ✔️ Ensure Redis is running and accessible.<br>
-✔️ Check if `user-service` is correctly publishing events.
+✔️ Check if `auth-service` and `user-service` are correctly publishing events.
