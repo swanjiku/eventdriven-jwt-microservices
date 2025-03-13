@@ -3,7 +3,7 @@
 
 ## 📌 Overview
 
-The **User Service** handles user-related operations such as registration, profile management, and role-based access control.
+The **User Service** handles user-related operations such as profile management, and role-based access control.
 
 ## 🛠️ Tech Stack
 
@@ -63,9 +63,8 @@ Whenever a user updates their profile, **an event is published to Redis.**
 sendNotificationToRedis(existingUser.getUsername(), "User updated successfully!", existingUser.getId());
 ```
 ## 🛠️ Common Issues & Fixes
-### ❌ Users cannot register?
-✔️ Ensure the database is running and accessible.<br>
-✔️ Check if the username or email already exists.
+### ❌ Users cannot manage profile?
+✔️ Ensure the database is running and accessible.
 
 ### ❌ JWT Token Not Working?
 ✔️ Ensure **auth-service** is running.<br>
