@@ -38,7 +38,9 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         System.out.println("Incoming request: " + path);
 
         // Allow public access to /api/auth/register and /api/auth/login
-        if (path.startsWith("/api/auth/register") || path.startsWith("/api/auth/login")) {
+        if (path.startsWith("/api/auth/register") || path.startsWith("/api/auth/login") ||
+                path.startsWith("fallback/auth-service") || path.startsWith("fallback/user-service") ||
+                path.startsWith("fallback/notification-service") ) {
             System.out.println("Skipping JWT filter for: " + path);
             return chain.filter(exchange); // Skip JWT validation
         }
