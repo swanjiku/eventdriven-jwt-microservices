@@ -28,17 +28,6 @@ spring:
                 backoff:
                   firstBackoff: 50ms
                   maxBackoff: 200ms
-            - name: RequestRateLimiter
-              args:
-                redisRateLimiter.replenishRate: 10
-                redisRateLimiter.burstCapacity: 20
-                keyResolver: "#{@userKeyResolver}"
-            - name: TimeLimiter
-              args:
-                configName: authServiceTimeLimiter
-            - name: Bulkhead
-              args:
-                configName: authServiceBulkhead
 
         - id: user-service
           uri: lb://USER-SERVICE
@@ -58,17 +47,6 @@ spring:
                 backoff:
                   firstBackoff: 50ms
                   maxBackoff: 200ms
-            - name: RequestRateLimiter
-              args:
-                redisRateLimiter.replenishRate: 10
-                redisRateLimiter.burstCapacity: 20
-                keyResolver: "#{@userKeyResolver}"
-            - name: TimeLimiter
-              args:
-                configName: userServiceTimeLimiter
-            - name: Bulkhead
-              args:
-                configName: userServiceBulkhead
 
         - id: notification-service
           uri: lb://NOTIFICATION-SERVICE
@@ -88,18 +66,7 @@ spring:
                 backoff:
                   firstBackoff: 50ms
                   maxBackoff: 200ms
-            - name: RequestRateLimiter
-              args:
-                redisRateLimiter.replenishRate: 10
-                redisRateLimiter.burstCapacity: 20
-                keyResolver: "#{@userKeyResolver}"
-            - name: TimeLimiter
-              args:
-                configName: notificationServiceTimeLimiter
-            - name: Bulkhead
-              args:
-                configName: notificationServiceBulkhead
-
+            65
 eureka:
   instance:
     prefer-ip-address: true
@@ -130,24 +97,3 @@ resilience4j:
         slidingWindowSize: 10
         failureRateThreshold: 50
         waitDurationInOpenState: 5s
-
-  timelimiter:
-    instances:
-      authServiceTimeLimiter:
-        timeoutDuration: 2s
-      userServiceTimeLimiter:
-        timeoutDuration: 3s
-      notificationServiceTimeLimiter:
-        timeoutDuration: 3s
-
-  bulkhead:
-    instances:
-      authServiceBulkhead:
-        maxConcurrentCalls: 10
-        maxWaitDuration: 1s
-      userServiceBulkhead:
-        maxConcurrentCalls: 20
-        maxWaitDuration: 1s
-      notificationServiceBulkhead:
-        maxConcurrentCalls: 15
-        maxWaitDuration: 1s
