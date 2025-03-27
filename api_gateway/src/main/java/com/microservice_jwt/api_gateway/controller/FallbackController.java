@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 public class FallbackController {
 
     @PostMapping("/auth-service")
-    @GetMapping("/auth-service")
     public ResponseEntity<String> authServiceFallback() {
         return ResponseEntity.status(503).body("Auth Service is currently unavailable. Try again later.");
     }

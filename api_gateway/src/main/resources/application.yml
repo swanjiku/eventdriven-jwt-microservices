@@ -21,13 +21,13 @@ spring:
                 fallbackUri: forward:/fallback/auth-service
             - name: Retry
               args:
-                retries: 3
+                retries: 5
                 statuses:
                   - INTERNAL_SERVER_ERROR
                   - SERVICE_UNAVAILABLE
                 backoff:
-                  firstBackoff: 50ms
-                  maxBackoff: 200ms
+                  firstBackoff: 500ms
+                  maxBackoff: 2000ms
 
         - id: user-service
           uri: lb://USER-SERVICE
@@ -75,6 +75,7 @@ eureka:
       defaultZone: http://127.0.0.1:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
+    registry-fetch-interval-seconds: 5  # Reduce from default 30s
 
 jwt:
   secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
@@ -97,3 +98,15 @@ resilience4j:
         slidingWindowSize: 10
         failureRateThreshold: 50
         waitDurationInOpenState: 5s
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      uri: http.request.uri
