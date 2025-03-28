@@ -38,6 +38,8 @@ public class SecurityConfig {
                         // Allow WebSocket connections without authentication
                         .requestMatchers("/ws/**").permitAll()
 
+                        .requestMatchers("/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
+
                         // Secure API endpoints
                         .requestMatchers("/api/notifications/user").authenticated()
                         .requestMatchers("/api/notifications/user/**").authenticated()

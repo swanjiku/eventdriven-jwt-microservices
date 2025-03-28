@@ -18,7 +18,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/login", "/api/auth/register", "/actuator/prometheus").permitAll()
+                        .requestMatchers("/api/auth/login", "/api/auth/register", "/actuator/prometheus", "/swagger-ui.html", "/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         .requestMatchers("/api/users/profile").hasAnyRole("USER", "ADMIN") // Ensure access
                         .anyRequest().authenticated()
                 )
