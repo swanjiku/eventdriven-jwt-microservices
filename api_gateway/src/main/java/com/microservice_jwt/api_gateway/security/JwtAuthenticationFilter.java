@@ -39,13 +39,15 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
         // Allow public access
         if (path.startsWith("/api/auth/register") || path.startsWith("/api/auth/login") ||
-                path.startsWith("/v3/api-docs") || path.startsWith("/swagger-ui") || path.startsWith("/actuator") ||
-                path.startsWith("fallback/auth-service") || path.startsWith("fallback/user-service") ||
-                path.startsWith("fallback/notification-service")) {
+                path.startsWith("/v3/api-docs") || path.startsWith("/swagger-ui") ||
+                path.startsWith("/swagger-ui.html") || path.startsWith("/swagger-ui/") ||
+                path.startsWith("/actuator") || path.startsWith("fallback/auth-service") ||
+                path.startsWith("fallback/user-service") || path.startsWith("fallback/notification-service")) {
 
             System.out.println("Skipping JWT filter for: " + path);
             return chain.filter(exchange);
         }
+
 
         List<String> authHeaders = request.getHeaders().get(HttpHeaders.AUTHORIZATION);
 
