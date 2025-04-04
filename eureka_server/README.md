@@ -1,77 +1,121 @@
 
-# 🚀 Eureka Server - Service Discovery
+# 🧭 Eureka Server - Service Discovery
 
-## 📌 Overview
+## 📘 Overview
 
-The Eureka Server acts as a service registry where microservices register themselves and discover other services dynamically. This enables **load balancing, failover handling, and dynamic service discovery** in a microservices architecture.
+The **Eureka Server** is the core of service discovery in this microservices architecture. It allows services like `auth-service`, `user-service`, and others to register and discover each other without hardcoded IPs or URLs. This promotes flexibility, fault tolerance, and scalability.
 
-## 🛠️ Tech Stack
+## 🧰 Tech Stack
 
-- **Java**
-- **Spring Boot**
+- **Java 17**
+- **Spring Boot 3.4**
 - **Spring Cloud Netflix Eureka**
+- **Micrometer + Prometheus** (for monitoring)
+- **Spring Boot Actuator**
 
 ## ⚙️ Features
 
-✅ Service Discovery & Registration<br>
-✅ Dynamic Load Balancing<br>
-✅ High Availability with Peer Replication<br>
-✅ Health Checks for Registered Services<br>
+✅ Service registration & discovery<br>
+✅ Self-preservation mode disabled (ideal for local/dev environments)<br>
+✅ Health checks for registered services<br>
+✅ Prometheus endpoint for monitoring<br>
+✅ Eureka dashboard UI at `localhost:8761`<br>
 
-## 🚀 Running the Eureka Server
-### 🛠️ Prerequisites
-
-Ensure you have installed:
-
+## 🚀 Getting Started
+### 📦 Prerequisites
 - Java 17+
-- Maven
+- Maven 3.8+
 
-### 💻 Steps to Run
-#### 1️⃣ Navigate to the project directory:
+### 🏃‍♂️ Run Locally
+
+#### 1️. Clone the project
 ```bash
-cd eureka-server
+git clone https://github.com/swanjiku/microservice_jwt.git
+cd microservice_jwt/eureka_server
 ```
-#### 2️⃣ Build the project:
+
+#### 2️. Build the project
 ```bash
 mvn clean install
 ```
-#### 3️⃣ Run the server:
+
+#### 3️. Run the application
 ```bash
 mvn spring-boot:run
 ```
 
-### 🔍 Access Eureka Dashboard
-Once running, open the Eureka dashboard in your browser:
+### 4. Access the Eureka Dashboard
+```arduino
+http://localhost:8761
+```
 
-📌 `http://localhost:8761`
-
-## 🔧 Configuration (`application.yml`)
-Eureka Server is configured in `src/main/resources/application.yml`:
+## ⚙️ Configuration
+`application.yml`
 
 ```yaml
 server:
-port: 8761
+  port: 8761
+
+spring:
+  application:
+    name: eureka-server
 
 eureka:
-instance:
-hostname: localhost
-client:
-registerWithEureka: false  # Since this is the server, it doesn't register itself
-fetchRegistry: false
+  instance:
+    hostname: localhost
+  client:
+    register-with-eureka: false
+    fetch-registry: false
+  server:
+    enable-self-preservation: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, prometheus
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+    tags:
+      uri: http.request.uri
 ```
-## 📌 Service Registration
+**🔐 Self-preservation is disabled for development. Enable it in production to prevent mass deregistration during network issues.**
 
-Other microservices (like `auth-service`, `user-service`, etc.) should register themselves by adding the following in their `application.yml`:
+## 🔗 How Other Services Register
 
+Each microservice (e.g., `auth-service`, `user-service`) should include this config in their `application.yml`:
 ```yaml
 eureka:
-client:
-serviceUrl:
-defaultZone: http://localhost:8761/eureka/
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
 ```
-## 🛠️ Common Issues & Fixes
 
-### ❌ Eureka Dashboard Not Showing Services?
+And include the dependency in `pom.xml`:
+```xml
+<dependency>
+<groupId>org.springframework.cloud</groupId>
+<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+</dependency>
+```
 
-✔️ Ensure the services are correctly configured to register with Eureka.<br>
-✔️ Check the Eureka client `serviceUrl` in each microservice's `application.yml`.
+## 🔗 How Other Services Register
+
+Eureka Server exposes a `/actuator/prometheus` endpoint, which Prometheus can scrape.
+### Prometheus Scrape Config:
+```yaml
+- job_name: 'eureka-server'
+  metrics_path: '/actuator/prometheus'
+  static_configs:
+    - targets: ['localhost:8761']
+```
+
+## 🐞 Common Issues
+
+| Problem      | Solution |
+| ----------- | ----------- |
+| ❌ Services not showing in UI      | ✅ Ensure correct Eureka client URL in services       |
+| ❌ Prometheus not scraping metrics   | ✅ Check if `/actuator/prometheus` is enabled and exposed        |
+| ❌ `404 Not Found` for dashboard   | ✅ Confirm server runs on `localhost:8761`        |
