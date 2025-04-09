@@ -15,6 +15,9 @@ The Auth Service handles **user authentication, authorization, and JWT token gen
 - **Spring Cloud Gateway Integration**
 - **Redis** (For event publishing)
 - **JWT (JSON Web Token)**
+- **Testcontainers** for MongoDB integration testing
+
+---
 
 ## ⚙️ Features
 
@@ -26,6 +29,8 @@ The Auth Service handles **user authentication, authorization, and JWT token gen
 - ✔️ **Service Discovery via Eureka**
 - ✔️ **Unit & Integration Tests for Auth Workflows**
 
+---
+
 ## 🚀 Running the Auth Service
 
 ### ⚙️ Prerequisites
@@ -34,8 +39,8 @@ Ensure the following are installed and running:
 
 - Java 17+
 - Maven
-- MongoDB
-- Redis
+- MongoDB (Local or Docker)
+- Redis (Local or Docker)
 - Eureka Server
 
 ### 💻 Steps to Run
@@ -50,6 +55,8 @@ mvn clean install
 mvn spring-boot:run
 ```
 
+---
+
 ## 🔐 JWT Authentication
 
 ### 📥 Login Response
@@ -63,9 +70,14 @@ Authorization: Bearer <your-token>
 - Signature is verified using a Base64-encoded secret key.
 - Tokens expire after 1 hour (configurable).
 
+---
+
 ##  🧪 Testing
 
-### ✅ AuthService Unit Tests
+### ✅ Unit & Integration Tests
+The Auth Service includes comprehensive tests for authentication workflows:
+
+#### ✅ AuthService Unit Tests
 
 Located in `AuthServiceTest.java`, these tests verify:
 
@@ -75,13 +87,74 @@ Located in `AuthServiceTest.java`, these tests verify:
 - ✅ **Invalid login** due to user not found or wrong password
 - ✅ Redis stream ops are mocked to avoid external dependencies
 
-### ✅ AuthController Integration Tests
+#### ✅ AuthController Integration Tests
 
 Located in `AuthControllerTest.java`, these tests verify:
 
 - ✅ `/api/auth/register` works with CSRF and proper body
 - ✅ `/api/auth/login` returns a JWT on valid credentials
 - ✅ All requests are authenticated using `@WithMockUser`
+
+### ✅ Integration Test with Testcontainers
+
+The project uses **Testcontainers** for MongoDB integration tests. MongoDB will be dynamically started during the test phase via Docker.
+The container is initialized with the following class:
+
+```java
+package com.microservice_jwt.auth_service.config;
+
+import org.springframework.context.ApplicationContextInitializer;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.test.context.support.TestPropertySourceUtils;
+import org.testcontainers.containers.MongoDBContainer;
+import org.testcontainers.utility.DockerImageName;
+
+public class MongoDbContainerInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
+
+    private static final MongoDBContainer mongoDBContainer = new MongoDBContainer(
+            DockerImageName.parse("mongo:6.0") // Use the appropriate version of MongoDB
+    );
+
+    static {
+        mongoDBContainer.start();
+    }
+
+    @Override
+    public void initialize(ConfigurableApplicationContext context) {
+        TestPropertySourceUtils.addInlinedPropertiesToEnvironment(
+                context,
+                "spring.data.mongodb.uri=" + mongoDBContainer.getReplicaSetUrl()
+        );
+    }
+}
+
+```
+
+In the `UserRepositoryTest.java`, the following integration test checks that a user can be saved and retrieved:
+
+```java
+@ExtendWith(SpringExtension.class)
+@DataMongoTest
+@ContextConfiguration(initializers = MongoDbContainerInitializer.class)
+class UserRepositoryTest {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Test
+    void findByUsername_ShouldReturnUser() {
+        User user = new User();
+        user.setUsername("testUser");
+        user.setEmail("test@example.com");
+        userRepository.save(user);
+
+        Optional<User> foundUser = userRepository.findByUsername("testUser");
+
+        assertTrue(foundUser.isPresent());
+    }
+}
+
+```
 
 ### 📡 Redis Event Publishing
 
@@ -90,6 +163,8 @@ Upon user registration, a Redis stream event is sent to notify downstream servic
 ```java
 sendNotificationToRedis(username, "User registered successfully!", user.getId());
 ```
+
+---
 
 ## 🔧 Configuration (`application.yml`)
 ```yaml
@@ -108,9 +183,11 @@ eureka:
     prefer-ip-address: true
 ```
 
+---
+
 ## 🛠️ Common Issues & Fixes
 ### ❌ Invalid Token Error?
-- ✅ Ensure token is in the Authorization header.
+- ✅ Ensure the token is included in the `Authorization` header as `Bearer <your-token>`.
 - ✅ Decode and verify token expiry & signature.
 
 ### ❌ User Already Exists?
@@ -118,3 +195,5 @@ eureka:
 
 ### ❌ CSRF Token Missing in Tests?
 - ✅ Use `.with(csrf())` in Spring MockMvc tests.
+
+---
