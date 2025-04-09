@@ -4,13 +4,13 @@ This is a microservices-based system implementing JWT authentication with Spring
 
 ## 🧩 Microservices Overview
 
-| Service	          | Description                   |
-|-------------------|-------------------------------|
-| 🧭 Eureka Server	 | Service Discovery             |
-| 🚪 API Gateway	   | Routing and JWT Validation    |
-| 🔐 Auth Service	  | Authentication & JWT Issuance |
-| 👤 User Service	  | User Profile Management       |
-|🔔 Notification Service	|Real-Time Event-Based Notifications|
+| Service	                                 | Description      |
+|------------------------------------------|------------------|
+| 🧭 [Eureka Server](./eureka_server/README.md)| Service Discovery|
+| 🚪 [API Gateway](./api_gateway/README.md)| Routing and JWT Validation|
+| 🔐 [Auth Service](./auth-service/README.md)| Authentication & JWT Issuance|
+| 👤 [User Service](./user_service/README.md)| User Profile Management|
+| 🔔 [Notification Service](./notification-service/README.md)|Real-Time Event-Based Notifications|
 
 
 ---
