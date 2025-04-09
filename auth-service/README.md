@@ -3,63 +3,95 @@
 
 ## 📌 Overview
 
-The Auth Service handles **user authentication, authorization, and JWT token generation** in the microservices system. It ensures secure access to other services using **Spring Security and JWT tokens**.
+The Auth Service handles **user authentication, authorization, and JWT token generation** in the microservices system. It ensures secure access to downstream services using **Spring Security and JWT tokens**, supports **RBAC**, and emits events via **Redis**.
 
 ## 🛠️ Tech Stack
 
-- **Java**
-- **Spring Boot**
+- **Java 17**
+- **Spring Boot 3+**
 - **Spring Security**
 - **Spring Data MongoDB**
-- **Eureka Client** (Service Discovery)
-- **API Gateway Integration**
+- **Spring Cloud Eureka Client**
+- **Spring Cloud Gateway Integration**
 - **Redis** (For event publishing)
-
+- **JWT (JSON Web Token)**
 
 ## ⚙️ Features
 
-✅ User Registration & Login<br>
-✅ JWT Token Generation<br>
-✅ Role-Based Access Control (RBAC)<br>
-✅ Password Hashing with BCrypt<br>
-✅ Redis Event Publishing for Notifications<br>
-✅ Service Discovery via Eureka<br>
+- ✔️ **User Registration & Login**
+- ✔️ **JWT Token Generation**
+- ✔️ **Role-Based Access Control (RBAC)**
+- ✔️ **Password Hashing with BCrypt**
+- ✔️ **Redis Stream-based Event Publishing**
+- ✔️ **Service Discovery via Eureka**
+- ✔️ **Unit & Integration Tests for Auth Workflows**
 
 ## 🚀 Running the Auth Service
-### 🛠️ Prerequisites
-Ensure you have installed:
 
--Java 17+
--Maven
--MongoDB
+### ⚙️ Prerequisites
+
+Ensure the following are installed and running:
+
+- Java 17+
+- Maven
+- MongoDB
+- Redis
+- Eureka Server
 
 ### 💻 Steps to Run
-
-#### 1️⃣ Navigate to the project directory:
-
 ```bash
+# 1️⃣ Navigate to the project directory:
 cd auth-service
-```
-#### 2️⃣ Build the project:
 
-```bash
+# 2️⃣ Build the project:
 mvn clean install
-```
-#### 3️⃣ Run the service:
 
-```bash
+# 3️⃣ Run the service:
 mvn spring-boot:run
 ```
 
 ## 🔐 JWT Authentication
-- Upon login, users receive a **JWT** token.
-- This token must be sent in the `Authorization` header as:
-```makefile
+
+### 📥 Login Response
+
+On successful login, a JWT token is returned. Use it as follows:
+```http
 Authorization: Bearer <your-token>
 ```
-- JWT tokens are validated in Spring Security filters.
+### 🔍 Token Validation
+- Validated in custom Spring Security filters.
+- Signature is verified using a Base64-encoded secret key.
+- Tokens expire after 1 hour (configurable).
 
-## 🔧 Configuration (application.yml)
+##  🧪 Testing
+
+### ✅ AuthService Unit Tests
+
+Located in `AuthServiceTest.java`, these tests verify:
+
+- ✅ **Successful registration** of a new user
+- ✅ **Exception** when registering an existing user
+- ✅ **Valid login** returns a JWT token
+- ✅ **Invalid login** due to user not found or wrong password
+- ✅ Redis stream ops are mocked to avoid external dependencies
+
+### ✅ AuthController Integration Tests
+
+Located in `AuthControllerTest.java`, these tests verify:
+
+- ✅ `/api/auth/register` works with CSRF and proper body
+- ✅ `/api/auth/login` returns a JWT on valid credentials
+- ✅ All requests are authenticated using `@WithMockUser`
+
+### 📡 Redis Event Publishing
+
+Upon user registration, a Redis stream event is sent to notify downstream services (e.g., notification-service):
+
+```java
+sendNotificationToRedis(username, "User registered successfully!", user.getId());
+```
+
+## 🔧 Configuration (`application.yml`)
 ```yaml
 server:
   port: 8081
@@ -76,17 +108,13 @@ eureka:
     prefer-ip-address: true
 ```
 
-## 📡 Redis Event Publishing
-Auth events (e.g., user registration) are published to Redis:
-
-```java
-sendNotificationToRedis(username, "User registered successfully!", user.getId());
-```
-
 ## 🛠️ Common Issues & Fixes
 ### ❌ Invalid Token Error?
-✔️ Ensure the token is correctly passed in the `Authorization` header.<br>
-✔️ Verify token expiration & signature using a JWT decoder.
+- ✅ Ensure token is in the Authorization header.
+- ✅ Decode and verify token expiry & signature.
 
 ### ❌ User Already Exists?
-✔️ Check if the username/email is unique before registering.
+- ✅ Username/email must be unique in MongoDB.
+
+### ❌ CSRF Token Missing in Tests?
+- ✅ Use `.with(csrf())` in Spring MockMvc tests.
