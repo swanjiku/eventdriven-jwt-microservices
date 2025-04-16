@@ -13,7 +13,6 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@ExtendWith(SpringExtension.class)
 @DataMongoTest
 @ContextConfiguration(initializers = MongoDbContainerInitializer.class)
 class UserRepositoryTest {
