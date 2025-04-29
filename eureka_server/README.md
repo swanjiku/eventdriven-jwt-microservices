@@ -1,12 +1,9 @@
-
 # 🧭 Eureka Server - Service Discovery
 
 ## 📘 Overview
-
 The **Eureka Server** is the core of service discovery in this microservices architecture. It allows services like `auth-service`, `user-service`, and others to register and discover each other without hardcoded IPs or URLs. This promotes flexibility, fault tolerance, and scalability.
 
 ## 🧰 Tech Stack
-
 - **Java 17**
 - **Spring Boot 3.4**
 - **Spring Cloud Netflix Eureka**
@@ -14,78 +11,61 @@ The **Eureka Server** is the core of service discovery in this microservices arc
 - **Spring Boot Actuator**
 
 ## ⚙️ Features
-
-✅ Service registration & discovery<br>
-✅ Self-preservation mode disabled (ideal for local/dev environments)<br>
-✅ Health checks for registered services<br>
-✅ Prometheus endpoint for monitoring<br>
-✅ Eureka dashboard UI at `localhost:8761`<br>
+- ✅ Service registration & discovery
+- ✅ Self-preservation mode disabled (ideal for local/dev environments)
+- ✅ Health checks for registered services
+- ✅ Prometheus endpoint for monitoring
+- ✅ Eureka dashboard UI at `localhost:8761`
 
 ## 🚀 Getting Started
+
 ### 📦 Prerequisites
 - Java 17+
 - Maven 3.8+
 
 ### 🏃‍♂️ Run Locally
-
-#### 1️. Clone the project
 ```bash
-git clone https://github.com/swanjiku/microservice_jwt.git
+# 1. Clone the project
 cd microservice_jwt/eureka_server
-```
 
-#### 2️. Build the project
-```bash
+# 2. Build the project
 mvn clean install
-```
 
-#### 3️. Run the application
-```bash
+# 3. Run the application
 mvn spring-boot:run
 ```
 
 ### 4. Access the Eureka Dashboard
-```arduino
-http://localhost:8761
-```
+- Visit: [http://localhost:8761](http://localhost:8761)
 
 ## ⚙️ Configuration
-`application.yml`
+- **Port:** Default is `8761` (set in `application.yml`)
+- **Self-preservation:** Disabled for local/dev (change in `application.yml` if needed for production)
+- **Actuator/Prometheus:** Metrics available at `/actuator/prometheus`
 
+### Example `application.yml`
 ```yaml
 server:
   port: 8761
-
 spring:
   application:
     name: eureka-server
-
 eureka:
-  instance:
-    hostname: localhost
   client:
     register-with-eureka: false
     fetch-registry: false
   server:
     enable-self-preservation: false
-
 management:
   endpoints:
     web:
       exposure:
-        include: health, metrics, prometheus
-  metrics:
-    export:
-      prometheus:
-        enabled: true
-    tags:
-      uri: http.request.uri
+        include: health, info, prometheus
 ```
-**🔐 Self-preservation is disabled for development. Enable it in production to prevent mass deregistration during network issues.**
 
-## 🔗 How Other Services Register
-
-Each microservice (e.g., `auth-service`, `user-service`) should include this config in their `application.yml`:
+## 🔗 Registering Services
+- Other microservices must set their `eureka.client.service-url.defaultZone` to `http://localhost:8761/eureka/` in their configs.
+- Example (in a service's `application.yml`):
 ```yaml
 eureka:
   client:
@@ -93,29 +73,15 @@ eureka:
       defaultZone: http://localhost:8761/eureka/
 ```
 
-And include the dependency in `pom.xml`:
-```xml
-<dependency>
-<groupId>org.springframework.cloud</groupId>
-<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
-</dependency>
-```
+## 🛠️ Troubleshooting
+- **Service Not Showing Up?**
+  - Ensure the service is running and configured with the correct Eureka URL.
+  - Check network/firewall settings.
+- **Dashboard Not Loading?**
+  - Ensure Eureka Server is running and listening on port 8761.
+- **Actuator/Prometheus Not Available?**
+  - Confirm actuator endpoints are enabled in `application.yml`.
 
-## 🔗 How Other Services Register
-
-Eureka Server exposes a `/actuator/prometheus` endpoint, which Prometheus can scrape.
-### Prometheus Scrape Config:
-```yaml
-- job_name: 'eureka-server'
-  metrics_path: '/actuator/prometheus'
-  static_configs:
-    - targets: ['localhost:8761']
-```
-
-## 🐞 Common Issues
-
-| Problem      | Solution |
-| ----------- | ----------- |
-| ❌ Services not showing in UI      | ✅ Ensure correct Eureka client URL in services       |
-| ❌ Prometheus not scraping metrics   | ✅ Check if `/actuator/prometheus` is enabled and exposed        |
-| ❌ `404 Not Found` for dashboard   | ✅ Confirm server runs on `localhost:8761`        |
+## 📚 References
+- [Spring Cloud Netflix Eureka Docs](https://cloud.spring.io/spring-cloud-netflix/reference/html/)
+- [Spring Boot Actuator Docs](https://docs.spring.io/spring-boot/docs/current/actuator-api/htmlsingle/)
