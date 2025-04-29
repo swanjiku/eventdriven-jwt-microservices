@@ -1,12 +1,9 @@
-
 # 🔐 Auth Service - JWT Authentication & Authorization
 
 ## 📌 Overview
-
 The Auth Service handles **user authentication, authorization, and JWT token generation** in the microservices system. It ensures secure access to downstream services using **Spring Security and JWT tokens**, supports **RBAC**, and emits events via **Redis**.
 
 ## 🛠️ Tech Stack
-
 - **Java 17**
 - **Spring Boot 3+**
 - **Spring Security**
@@ -20,7 +17,6 @@ The Auth Service handles **user authentication, authorization, and JWT token gen
 ---
 
 ## ⚙️ Features
-
 - ✔️ **User Registration & Login**
 - ✔️ **JWT Token Generation**
 - ✔️ **Role-Based Access Control (RBAC)**
@@ -34,9 +30,7 @@ The Auth Service handles **user authentication, authorization, and JWT token gen
 ## 🚀 Running the Auth Service
 
 ### ⚙️ Prerequisites
-
 Ensure the following are installed and running:
-
 - Java 17+
 - Maven
 - MongoDB (Local or Docker)
@@ -57,143 +51,60 @@ mvn spring-boot:run
 
 ---
 
-## 🔐 JWT Authentication
+## 🔐 JWT Authentication & RBAC
+- All endpoints (except `/api/auth/login` and `/api/auth/register`) require a valid JWT in the `Authorization: Bearer <token>` header.
+- JWT tokens include user ID and roles; RBAC is enforced via Spring Security annotations.
 
-### 📥 Login Response
+### Example: Login & Token Usage
+```bash
+# Register a new user
+curl -X POST -H "Content-Type: application/json" -d '{"username":"alice","password":"password"}' http://localhost:8081/api/auth/register
 
-On successful login, a JWT token is returned. Use it as follows:
-```http
-Authorization: Bearer <your-token>
-```
-### 🔍 Token Validation
-- Validated in custom Spring Security filters.
-- Signature is verified using a Base64-encoded secret key.
-- Tokens expire after 1 hour (configurable).
+# Login to get JWT
+curl -X POST -H "Content-Type: application/json" -d '{"username":"alice","password":"password"}' http://localhost:8081/api/auth/login
 
----
-
-##  🧪 Testing
-
-### ✅ Unit & Integration Tests
-The Auth Service includes comprehensive tests for authentication workflows:
-
-#### ✅ AuthService Unit Tests
-
-Located in `AuthServiceTest.java`, these tests verify:
-
-- ✅ **Successful registration** of a new user
-- ✅ **Exception** when registering an existing user
-- ✅ **Valid login** returns a JWT token
-- ✅ **Invalid login** due to user not found or wrong password
-- ✅ Redis stream ops are mocked to avoid external dependencies
-
-#### ✅ AuthController Integration Tests
-
-Located in `AuthControllerTest.java`, these tests verify:
-
-- ✅ `/api/auth/register` works with CSRF and proper body
-- ✅ `/api/auth/login` returns a JWT on valid credentials
-- ✅ All requests are authenticated using `@WithMockUser`
-
-### ✅ Integration Test with Testcontainers
-
-The project uses **Testcontainers** for MongoDB integration tests. MongoDB will be dynamically started during the test phase via Docker.
-The container is initialized with the following class:
-
-```java
-package com.microservice_jwt.auth_service.config;
-
-import org.springframework.context.ApplicationContextInitializer;
-import org.springframework.context.ConfigurableApplicationContext;
-import org.springframework.test.context.support.TestPropertySourceUtils;
-import org.testcontainers.containers.MongoDBContainer;
-import org.testcontainers.utility.DockerImageName;
-
-public class MongoDbContainerInitializer implements ApplicationContextInitializer<ConfigurableApplicationContext> {
-
-    private static final MongoDBContainer mongoDBContainer = new MongoDBContainer(
-            DockerImageName.parse("mongo:6.0") // Use the appropriate version of MongoDB
-    );
-
-    static {
-        mongoDBContainer.start();
-    }
-
-    @Override
-    public void initialize(ConfigurableApplicationContext context) {
-        TestPropertySourceUtils.addInlinedPropertiesToEnvironment(
-                context,
-                "spring.data.mongodb.uri=" + mongoDBContainer.getReplicaSetUrl()
-        );
-    }
-}
-
-```
-
-In the `UserRepositoryTest.java`, the following integration test checks that a user can be saved and retrieved:
-
-```java
-@ExtendWith(SpringExtension.class)
-@DataMongoTest
-@ContextConfiguration(initializers = MongoDbContainerInitializer.class)
-class UserRepositoryTest {
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @Test
-    void findByUsername_ShouldReturnUser() {
-        User user = new User();
-        user.setUsername("testUser");
-        user.setEmail("test@example.com");
-        userRepository.save(user);
-
-        Optional<User> foundUser = userRepository.findByUsername("testUser");
-
-        assertTrue(foundUser.isPresent());
-    }
-}
-
-```
-
-### 📡 Redis Event Publishing
-
-Upon user registration, a Redis stream event is sent to notify downstream services (e.g., notification-service):
-
-```java
-sendNotificationToRedis(username, "User registered successfully!", user.getId());
+# Use JWT to access a protected endpoint
+curl -H "Authorization: Bearer <your-jwt-token>" http://localhost:8081/api/auth/me
 ```
 
 ---
 
-## 🔧 Configuration (`application.yml`)
-```yaml
-server:
-  port: 8081
+## ⚙️ Configuration
+- **MongoDB URI:** Set via `spring.data.mongodb.uri` (default: `mongodb://localhost:27017/authdb`)
+- **Redis URI:** Set via `spring.redis.host`/`spring.redis.port` (default: `localhost:6379`)
+- **JWT Secret:** Set via `jwt.secret` in `application.yml`
 
-spring:
-  application:
-    name: auth-service
+---
 
-eureka:
-  client:
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    prefer-ip-address: true
+## 🧪 Running Tests
+```bash
+mvn test
 ```
+- Uses Testcontainers for MongoDB integration tests.
+
+---
+
+## 🔄 Extending the Service
+- Add new roles by updating the `Role` enum and security configuration.
+- To support OAuth providers, integrate with Spring Security OAuth2 modules.
+- To publish additional events, use Redis Streams in the relevant service logic.
 
 ---
 
 ## 🛠️ Common Issues & Fixes
-### ❌ Invalid Token Error?
-- ✅ Ensure the token is included in the `Authorization` header as `Bearer <your-token>`.
-- ✅ Decode and verify token expiry & signature.
+- **Invalid Token Error?**
+  - Ensure the token is included in the `Authorization` header as `Bearer <your-token>`.
+  - Decode and verify token expiry & signature.
+- **DB Connection Issues?**
+  - Check MongoDB/Redis are running and URIs are configured correctly.
+- **Service Discovery Fails?**
+  - Ensure Eureka Server is running and reachable.
 
-### ❌ User Already Exists?
-- ✅ Username/email must be unique in MongoDB.
+---
 
-### ❌ CSRF Token Missing in Tests?
-- ✅ Use `.with(csrf())` in Spring MockMvc tests.
+## 📚 References
+- [Spring Security Docs](https://docs.spring.io/spring-security/site/docs/current/reference/html5/)
+- [JWT Introduction](https://jwt.io/introduction/)
+- [Spring Data MongoDB](https://docs.spring.io/spring-data/mongodb/docs/current/reference/html/)
 
 ---
