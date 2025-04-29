@@ -1,14 +1,11 @@
-
 # 🔔 Notification Service - Event-Based Notification System
 
 ## 📌 Overview
-
 The Notification Service is responsible for handling real-time and asynchronous notifications within the microservices ecosystem. It consumes user events from Redis (both Streams and Pub/Sub), stores them in MongoDB, and delivers notifications via WebSocket to subscribed clients.
 
 ---
 
 ## 🛠️ Tech Stack
-
 - **Java 17+**
 - **Spring Boot 3+**
 - **Spring Data MongoDB**
@@ -21,19 +18,17 @@ The Notification Service is responsible for handling real-time and asynchronous 
 ---
 
 ## ⚙️ Features
-
-✅ Dual Redis listeners: **Streams** + **Pub/Sub**  
-✅ Real-time WebSocket push notifications  
-✅ MongoDB for persistent notification storage  
-✅ Role-based access control (RBAC)  
-✅ Secure endpoints using JWT  
-✅ Swagger UI for API exploration  
-✅ Service Discovery with Eureka
+- ✅ Dual Redis listeners: **Streams** + **Pub/Sub**
+- ✅ Real-time WebSocket push notifications
+- ✅ MongoDB for persistent notification storage
+- ✅ Role-based access control (RBAC)
+- ✅ Secure endpoints using JWT
+- ✅ Swagger UI for API exploration
+- ✅ Service Discovery with Eureka
 
 ---
 
 ## 🧩 Architecture Overview
-
 1. **Publisher**: Publishes notifications to Redis Stream (`notifications_stream`).
 2. **Redis Stream Listener**: Reads messages from Redis stream and forwards them via WebSocket.
 3. **Redis Subscriber**: Also listens to Redis Pub/Sub channel (`notifications`) as fallback or secondary channel.
@@ -46,17 +41,13 @@ The Notification Service is responsible for handling real-time and asynchronous 
 ## 🚀 How to Run
 
 ### ✅ Prerequisites
-
 - Java 17+
 - Maven
 - Redis (running locally or remotely)
 - MongoDB (running locally or remotely)
 - Eureka Server (must be running)
 
----
-
 ### 🔧 Steps
-
 ```bash
 # 1. Navigate to the project directory
 cd notification-service
@@ -64,103 +55,69 @@ cd notification-service
 # 2. Build the project
 mvn clean install
 
-# 3. Run the application
+# 3. Run the service
 mvn spring-boot:run
 ```
 
 ---
 
-## 🔔 Notification Flow
-```mermaid
-sequenceDiagram
-    participant User-Service
-    participant Redis
-    participant Notification-Service
-    participant MongoDB
-    participant WebSocket-Client
+## 🔗 API Endpoints & WebSocket Usage
+- **REST API Base:** `/api/notifications`
+- **WebSocket Endpoint:** `/ws`
+- **WebSocket Topic:** `/topic/notifications`
+- **Swagger UI:** `http://localhost:8084/swagger-ui.html`
 
-    User-Service->>Redis: Publish event (Redis Stream / PubSub)
-    Redis-->>Notification-Service: Deliver message
-    Notification-Service->>MongoDB: Save Notification
-    Notification-Service->>WebSocket-Client: Send via STOMP (/topic/notifications)
+### Example: Send a Notification (REST)
+```bash
+curl -X POST -H "Authorization: Bearer <jwt-token>" -H "Content-Type: application/json" \
+  -d '{"userId": "123", "message": "Hello!"}' \
+  http://localhost:8084/api/notifications
+```
+
+### Example: WebSocket Client (JS)
+```js
+const socket = new SockJS('http://localhost:8084/ws');
+const stompClient = Stomp.over(socket);
+stompClient.connect({}, function(frame) {
+  stompClient.subscribe('/topic/notifications', function(notification) {
+    console.log(notification.body);
+  });
+});
 ```
 
 ---
 
-## 📡 WebSocket Info
-- Endpoint: `/ws`
-- Allowed Origins: `http://localhost:3000`, `http://127.0.0.1:5500`
-- Subscription Destination: `/topic/notifications`
-- STOMP Prefix: `/app`
+## ⚙️ Configuration
+- **MongoDB URI:** `spring.data.mongodb.uri` (default: `mongodb://localhost:27017/notifications`)
+- **Redis URI:** `spring.redis.host`/`spring.redis.port` (default: `localhost:6379`)
+- **JWT Secret:** `jwt.secret` in `application.yml`
 
 ---
 
-## 📂 API Endpoints
-
-|Method	|Endpoint	|Description	|Auth Required|
-|-|-|-|-|
-|POST	|`/api/notifications/send`	|Send notification (to user or global)	|✅|
-|GET	|`/api/notifications/user`	|Get notifications for logged-in user	|✅|
-|GET	|`/api/notifications/user/{id}`	|Get notifications for specific user	|✅|
-|GET	|`/api/notifications/all`	|Get all notifications (Admin only)	|✅ (ADMIN)|
-|POST	|`/api/notifications/test`	|Test endpoint (sanity check)	|❌|
+## 🛠️ Troubleshooting
+- **WebSocket Not Connecting:** Ensure port `8084` is open and CORS is configured for your frontend.
+- **No Notifications Delivered:** Check Redis/MongoDB connectivity and event publishing.
+- **Swagger UI Not Loading:** Confirm dependencies and actuator endpoints are enabled.
 
 ---
 
-## 🔐 Security
-
-- JWT Authentication enabled.
-- Role-based endpoint access (`@PreAuthorize`).
-- CORS configured for trusted API Gateway (`http://localhost:8082`).
-
----
-
-## 🧪 Swagger UI
-Access at: `http://localhost:<port>/swagger-ui.html`
-
-Auth header: Use `Bearer <token>` in "Authorize"
-
----
-
-## 🛠️ Redis Config
-- **Stream**: `notifications_stream`
-- **Pub/Sub Channel**: `notifications`
-
-**Both are configured and listened to concurrently.**
-
----
-
-## 🗃 MongoDB Schema
-
-```json
-{
-  "_id": "string",
-  "message": "string",
-  "recipientId": "string",
-  "isGlobal": "boolean",
-  "timestamp": "datetime"
-}
+## 🧪 Running Tests
+```bash
+mvn test
 ```
 
 ---
 
-## 💡 Future Enhancements
-- **📧 Email notification support**
-- **📱 Push notification (Firebase, OneSignal)**
-- **📥 Notification preferences per user**
-- **⏱ Expiration for global notifications**
-- **📊 WebSocket status monitoring**
+## 🔄 Extending the Service
+- Add new notification types by updating the event publishing logic.
+- To support new channels (e.g., email/SMS), extend the notification handler.
+- For advanced RBAC, update Spring Security configuration.
 
 ---
 
-## 🧰 Troubleshooting
-### ❌ Notifications Not Received in WebSocket?
-- ✅ Confirm WebSocket client is subscribed to `/topic/notifications`.
-- ✅ Redis is running and accessible.
-- ✅ Eureka discovery is working correctly.
-
-### ❌ Notifications Not Stored in DB?
-- ✅ MongoDB is running.
-- ✅ Check logs from `RedisStreamListener` and `RedisSubscriber`.
+## 📚 References
+- [Spring WebSocket Docs](https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#websocket)
+- [Spring Data MongoDB](https://docs.spring.io/spring-data/mongodb/docs/current/reference/html/)
+- [Spring Security Docs](https://docs.spring.io/spring-security/site/docs/current/reference/html5/)
 
 ---
