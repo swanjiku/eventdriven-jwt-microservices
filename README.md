@@ -1,17 +1,18 @@
 # 🌐 Microservices JWT Authentication System
 
-This is a microservices-based system implementing JWT authentication with Spring Cloud, Eureka, Redis, and MongoDB.
+A robust, production-ready microservices system implementing JWT authentication and authorization using Spring Cloud, Eureka, Redis, MongoDB, and WebSocket. This project demonstrates scalable, event-driven architecture with centralized monitoring and real-time notifications.
+
+---
 
 ## 🧩 Microservices Overview
 
-| Service	                                 | Description      |
-|------------------------------------------|------------------|
-| 🧭 [Eureka Server](./eureka_server/README.md)| Service Discovery|
-| 🚪 [API Gateway](./api_gateway/README.md)| Routing and JWT Validation|
-| 🔐 [Auth Service](./auth-service/README.md)| Authentication & JWT Issuance|
-| 👤 [User Service](./user_service/README.md)| User Profile Management|
-| 🔔 [Notification Service](./notification-service/README.md)|Real-Time Event-Based Notifications|
-
+| Service | Description |
+|---------|-------------|
+| 🧭 [Eureka Server](./eureka_server/README.md) | Service Discovery & Registry |
+| 🚪 [API Gateway](./api_gateway/README.md) | Routing, JWT Validation, Centralized Entry Point |
+| 🔐 [Auth Service](./auth-service/README.md) | Authentication, JWT Issuance, RBAC |
+| 👤 [User Service](./user_service/README.md) | User Profile, Roles, Event Publishing |
+| 🔔 [Notification Service](./notification-service/README.md) | Real-Time Notifications, WebSocket |
 
 ---
 
@@ -27,82 +28,78 @@ This is a microservices-based system implementing JWT authentication with Spring
 
 ---
 
-## 🚀 Running the Project
-Ensure all dependencies (MongoDB, Redis, Eureka) are up and running.
+## 🚀 Quick Start
 
-### 1️⃣ Start Eureka Server
-```bash
-cd eureka-server
-mvn spring-boot:run
-``
+### Prerequisites
+- Java 17+
+- Maven
+- Docker (for Prometheus & Grafana)
+- MongoDB, Redis running locally or via Docker
 
-### 2️⃣ Start Auth Service
+### 1️⃣ Start Core Dependencies
+Ensure MongoDB, Redis, and Eureka Server are running.
+
 ```bash
-cd auth-service
-mvn spring-boot:run
+# MongoDB (Docker)
+docker run -d --name mongo -p 27017:27017 mongo
+# Redis (Docker)
+docker run -d --name redis -p 6379:6379 redis
 ```
 
-### 3️⃣ Start API Gateway
+### 2️⃣ Start Microservices (in separate terminals)
 ```bash
-Copy code
-cd api-gateway
-mvn spring-boot:run
+cd eureka_server && mvn spring-boot:run
+cd auth-service && mvn spring-boot:run
+cd api_gateway && mvn spring-boot:run
+cd user_service && mvn spring-boot:run
+cd notification-service && mvn spring-boot:run
 ```
 
-### 4️⃣ Start User Service
-```bash
-cd user-service
-mvn spring-boot:run
-```
-### 5️⃣ Start Notification Service
-```bash
-cd notification-service
-mvn spring-boot:run
-```
-
----
-
-## 📊 Centralized Monitoring (Prometheus + Grafana)
-
-Docker Compose is used to run Prometheus and Grafana.
-
-### ▶️ Start Monitoring Stack
+### 3️⃣ Start Monitoring Stack
 ```bash
 docker-compose up -d
 ```
+- **Prometheus:** http://localhost:9090
+- **Grafana:** http://localhost:3000 (login: admin/admin)
 
-### 🔍 Prometheus
-- URL: http://localhost:9090
+---
 
-### 📈 Grafana
-- URL: http://localhost:3000
-- Login: `admin / admin`
-
-Prometheus scrapes metrics from:
-
-- `eureka_server:8761`
-- `auth-service:8081`
-- `api_gateway:8082`
-- `user-service:8084`
-- `notification-service:8084`
+## 📚 Service Endpoints
+- **Eureka Dashboard:** http://localhost:8761
+- **API Gateway:** http://localhost:8082
+- **Swagger UI:** http://localhost:8082/swagger-ui.html
+- **Prometheus Metrics:** http://localhost:8082/actuator/prometheus
+- **Notification WebSocket:** ws://localhost:8084/ws
 
 ---
 
 ## 🔔 Notification Workflow
-1. Other services publish events (e.g., profile update) to Redis.
-2. Notification Service listens via **Redis Streams** and **Redis Pub/Sub**.
-3. Notifications are stored in MongoDB.
-4. Real-time updates are pushed to WebSocket clients via `/topic/notifications`.
+1. Services publish events (e.g., user update) to Redis Streams.
+2. Notification Service consumes events, stores them in MongoDB.
+3. Real-time notifications are pushed to clients via WebSocket `/topic/notifications`.
 
 ---
 
 ## ✅ Features Summary
+- 🔐 JWT Authentication & RBAC
+- 🛡️ Centralized API Gateway Security
+- 🧭 Service Discovery (Eureka)
+- 📬 Real-Time Event-Based Notifications
+- 📊 Centralized Monitoring (Prometheus + Grafana)
+- 🔄 Circuit Breaker, Retry, and Fault Tolerance
 
-- 🔐 JWT Authentication and Role-Based Access Control (RBAC)
-- 🧠 Service Discovery via Eureka
-- 📩 Event-driven notifications using Redis
-- 📡 Real-time WebSocket broadcasting
-- 📊 Prometheus + Grafana metrics dashboard
-- 💥 Resilience4j for fault-tolerance (circuit breaker + retry)
+---
+
+## 📝 References & Docs
+- [Spring Cloud Gateway](https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/)
+- [Spring Security](https://docs.spring.io/spring-security/site/docs/current/reference/html5/)
+- [Resilience4j](https://resilience4j.readme.io/docs)
+- [Prometheus](https://prometheus.io/docs/introduction/overview/)
+- [Grafana](https://grafana.com/docs/)
+
+---
+
+## 🤝 Contributing
+Pull requests and issues are welcome! See each service's README for details on architecture, configuration, and extension.
 
 ---
