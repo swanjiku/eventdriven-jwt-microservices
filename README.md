@@ -1,4 +1,4 @@
-# 🌐 Microservices JWT Authentication System
+# 🌐 Event-Driven JWT Microservices System
 
 A robust, production-ready microservices system implementing JWT authentication and authorization using Spring Cloud, Eureka, Redis, MongoDB, and WebSocket. This project demonstrates scalable, event-driven architecture with centralized monitoring and real-time notifications.
 
